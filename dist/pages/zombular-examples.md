@@ -597,9 +597,232 @@ z.setBody(Body);
 ``` demo
 // file: index.js
 import z from 'https://blackmius.ru/shared/zombular.js';
-const Style = z._style(``);
-const Body = z('', Style);
+
+import 'https://blackmius.ru/shared/moment.js'
+import 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.js';
+
+const sgURL = 'https://api.npms.io/v2/search/suggestions?size=5&q=';
+const pkgURL = 'https://api.npms.io/v2/package/';
+const mz = 'https://flat.badgen.net/bundlephobia/minzip/';
+const bp = 'https://bundlephobia.com/result?p=';
+const dw = 'https://api.npmjs.org/downloads/range/';
+
+const day = 1000*60*60*24;
+
+function dateRange(last) {
+	let today = new Date();
+    let before = new Date(today - last);
+    today = today.toLocaleDateString('AF');
+    before = before.toLocaleDateString('AF');
+    return before + ':' + today;
+}
+
+const dates = {
+    'week': dateRange(day*7),
+    'month': dateRange(day*30),
+    '3 month': dateRange(day*90),
+    'half year': dateRange(day*180),
+    'year': dateRange(day*365)
+}
+
+let range = 'week';
+
+let chart;
+
+function setData() {
+	if (!chart) return;
+    let datasets = [], last = compare.length;
+	compare.forEach(c => {
+    	fetch(dw+dates[range]+'/'+c.name)
+        .then(res => res.json())
+        .then(json => {
+        	datasets.push({
+            	label: c.name,
+                borderColor: c.color,
+                fill: false,
+                data: json.downloads.map(d => ({
+                	x: new Date(d.day),
+                    y: d.downloads
+                }))
+            });
+            last--;
+            if (last == 0) {
+            	chart.data.datasets = datasets;
+                chart.update();
+            }
+        });
+    });
+}
+
+const C = _ => compare.length ? z('',
+z._p('Downloads in past ',
+    z._select.p0({
+        value: range,
+        oninput(e) {
+        	range = e.target.value;
+            setData();
+        }
+    }, Object.keys(dates).map(
+        p => z._option({ value: p }, p)))
+),
+z._canvas.sp1({
+	on$created(e) {
+    	chart = new Chart(e.target.getContext('2d'), {
+        	type: 'line',
+        	data: {},
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }],
+                    xAxes: [{
+                        type: 'time',
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: "Date",
+                        }
+                    }],
+                }
+            }
+        });
+        setData();
+    }
+})
+) : '';
+
+const randColor = _ => '#'
+	+ Math.floor(Math.random() * 0xffffff)
+	.toString(16).padStart(6);
+
+let compare = [], sgs = [], s;
+function comparePackage(pkg) {
+	if (compare.find(p => p.name === pkg.name)) return;
+    pkg.color = randColor();
+    compare.push(pkg)
+    fetch(pkgURL + pkg.name)
+    .then(res => res.json())
+    .then(json => {
+        pkg.github = json.collected.github;
+        z.update();
+    });
+    setData();
+}
+
+const Search = z.m(
+    z._input.p0.br({
+        value: _ => s, type: 'text', name: 'search',
+        class: _ => ({ focused: s }),
+        placeholder: 'Enter an npm package...',
+        oninput(e) {
+            s = e.target.value;
+			if (!s.trim()) {
+            	sgs = [];
+                z.update();
+            	return;
+            }
+            z.update();
+            fetch(sgURL + encodeURI(s))
+            .then(res => res.json())
+            .then(json => {
+                sgs = json;
+                z.update();
+            });
+        },
+    }),
+    _ => sgs.length ? z.sp1(sgs.map(
+    	sg => z.p0.sg.cp.br({
+        	onclick(e) {
+                sgs = [];
+                s = '';
+                comparePackage(sg.package);
+                z.update();
+            }
+        },
+        	z._b(sg.package.name),
+            z.v(sg.package.description)
+        )
+    )) : '',
+    _ => compare.length ? z.g.wrap(compare.map(
+    	p => z.b0.p0.br.sp1({
+        	style: `border-color: ${p.color}`
+        }, z.g.ac(
+            z.v(p.name), z.cp({
+                onclick(e) {
+                    compare.splice(compare.indexOf(p), 1);
+                   	setData();
+                    z.update();
+                }
+            }, '×'))
+        )
+    )) : ''
+);
+
+
+const Table = _ => compare.length
+	? z._table.sp1(
+    	z._tr(['', 'stars', 'forks',
+        	'issues', 'updated', 'size'].map(
+            t => z._th(t)
+        )),
+        compare.map(c => z._tr(
+        	z._td(z._a({ href: c.links.npm }, c.name)),
+            c.github ? [
+                z._td(c.github.starsCount),
+                z._td(c.github.forksCount),
+                z._td(c.github.issues.count)
+            ] : [z._td(),z._td(),z._td()],
+            z._td(c.date.slice(0, 10)),
+            z._td(
+            	z._a({ href: bp + c.name },
+                	z._img({src:mz+c.name})
+           	))
+        ))
+    )
+    : '';
+
+const Info = z._p(
+	"The npm package download data comes from npm's ",
+    z._a({
+    	href: 'https://github.com/npm/download-counts'
+    }, 'download counts'),
+    ' api and package details come from ',
+    z._a({ href: 'npms.io' }, 'npms.io')
+);
+
+const Body = z.m(
+	z._h1('Compare package download counts over time'),
+    Search,
+	C,
+    Table,
+    Info
+);
 z.setBody(Body);
+// file: style.css
+body { font-family: sans-serif; }
+.br { border-radius: 4px; }
+.b0 { border: 2px solid; }
+input { width: 100%; border: 2px solid #ddd;
+	 outline: none; }
+input.focused  { border-color: #8bc34a; }
+.sp1 { margin-top: 15px; }
+a { text-decoration: none; color: #8bc34a; }
+a:hover { text-decoration: underline; }
+.p0 { padding: 5px 10px; }
+.cp { cursor: pointer; }
+.sg:hover { background: #eee; }
+.g { display: flex; }
+.g { margin-left: -1rem; }
+.g > * { margin-left: 1rem; }
+.g > .g { margin-left: 0; }
+.g.wrap { flex-wrap: wrap; }
+.g.ac { align-items: center; }
+.ws { white-space: pre; }
+td { padding: 5px 10px; }
+select { border: 0; border-bottom: 1px solid;
+	background: 0; outline: 0; }
 ```
 
 # Drum machine
@@ -678,8 +901,6 @@ html { font-family: sans-serif; }
 body { padding: 45px 30px; }
 .g { display: flex; }
 .g.wrap { flex-wrap: wrap; }
-.g.row:first-child { margin-left: 0; }
-.g.row > * { margin-left: 1.5em; }
 .g.col { flex-direction: column; }
 .s1 { flex: 1; }
 .ac { align-items: center; }
@@ -692,6 +913,8 @@ body { padding: 45px 30px; }
 .sp1 { margin-top: 15px; }
 .sp2 { margin-top: 30px; }
 .spl { margin-left: 15px; }
+.spl2 { margin-left: 30px; }
+.spl3 { margin-left: 45px; }
 a { color: black; text-decoration: none; position: relative;
     overflow: hidden; padding: 5px; }
 a:after { content: ''; border-bottom: 1px solid; bottom: 0px;
@@ -723,8 +946,8 @@ const Adder = size => z.v.g.ac.wrap.row(
             z.update();
         }
     }, '-'),
-    z.v(size.count),
-    z._button({
+    z.v.spl(size.count),
+    z._button.spl({
         onclick(e) {
             size.count++;
             z.update();
@@ -736,7 +959,7 @@ const sizes = ["10''", "12''", "14''"];
 
 const price = n => '$' + n.toFixed(2);
 
-const Pizza = pizza => z.w0.sp2.g.col(
+const Pizza = pizza => z.w0.sp2.g.col.spl3(
     z.v(
         z._img({src: pizza.sizes[pizza.size].photo, width: '100%'}),
         z._h2(pizza.name),
@@ -749,7 +972,7 @@ const Pizza = pizza => z.w0.sp2.g.col(
         }, sizes[j]))),
         z.g.ac.sp1(
             z._b(price(pizza.sizes[pizza.size].price)),
-            z.s1(),
+            z.s1.spl(),
             pizza.sizes[pizza.size].count
                 ? Adder(pizza.sizes[pizza.size])
                 : z._button({
@@ -770,15 +993,15 @@ const Menu = z.m(
 const BasketItem = (pizza, size, si) => z.sp2.g(
     z._img({src: size.photo, height: '100px'}),
     z.g.ac.spl.row.s1(
-        z.v(
+        z.v.spl(
             z.title('Name'),
             z._h2.sp0(pizza.name + ' ' + sizes[si]),
             z.title('Price'),
             z._span(size.count, ' * ', price(size.price), ' = '),
             z._b(price(size.count * size.price))),
-        z.s1(),
+        z.s1.spl2(),
         Adder(size),
-        z._button({
+        z._button.spl({
             onclick(e) {
                 size.count = 0;
                 z.update();
