@@ -2,7 +2,7 @@
 
 * { box-sizing: border-box; }
 html { font: 400 24px/1.5 'Lato', sans-serif; }
-body { color: #202020; }
+body { color: #202020; margin: 0; }
 
 iframe { border: none; width: 100%; margin-top: 15px; border-radius: 4px; }
 .main { margin: 72px auto 48px auto; max-width: 680px; padding: 0 30px; }
@@ -87,5 +87,5 @@ h1, h2, h3, h4, h5, h6 { position: relative; }
 @media (max-width: 640px) {
 	body { font-size: 16px; }
 	.main { margin-top: 24px; padding: 0 24px; }
-	pre { margin: 0 -24px; font-size: 14px; }
+	pre, iframe { margin: 0 -24px; font-size: 14px; width: 100vw; }
 }

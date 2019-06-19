@@ -29,7 +29,7 @@ function highlight(str, lang) {
     return '';
 }
 
-const embeded = 'http://localhost:8080';
+const embeded = 'https://blackmius.ru/playground'//'http://localhost:8080';
 
 function p(remarkable) {
     remarkable.toc = [];

@@ -54,6 +54,9 @@ button { outline: none; border: 0; font: inherit;
     grid-template-columns: repeat(4, 1fr); }
 .keys > * { background: #fff; padding: 0.5em 1.25em;
     position: relative; text-align: center; }
+@media (max-width: 400px) {
+    .keys > * { padding: 0.5em calc(100vw / 16); }
+}
 .keys > *:active::before { content: "";  opacity: 0.3;
   	z-index: 1; background-color: rgba(0, 0, 0, 0.2);
     box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.5) inset;
@@ -78,6 +81,7 @@ html { font-family: sans-serif; }
   grid-template-columns: repeat(auto-fill, 34px); }
 .gr.text { grid-template-columns: repeat(2, 1fr); }
 .spl { margin-left: 15px; } .spl0 { margin-left: 5px; }
+.sp1 { margin-top: 15px; }
 .checkbox { height: 16px; width: 16px; margin: 0;
     display: inline-block; border: 2px solid #5a5a5a;
     position: relative; cursor: pointer;
@@ -87,7 +91,11 @@ html { font-family: sans-serif; }
     position: absolute; top: -4px; font-size: 20px;  }
 input { border: 0; border-bottom: 1px solid #5a5a5a;
     outline: none; padding-bottom: .2em; font-size: 20px; }
-.c { display: flex; align-items: center; }
+.g { display: flex; margin-left: -1.5rem; }
+.g > * { margin-left: 1.5rem; }
+.g > .g { margin-left: 0; }
+.g.ac { align-items: center; }
+.g.wrap { flex-wrap: wrap; }
 
 // file: index.js
 import z from 'https://blackmius.ru/shared/zombular.js';
@@ -105,21 +113,24 @@ fetch('https://unpkg.com/emojilib@2.4.0/emojis.json')
     z.update();
 });
 
-const Emoji = e => z.emoji.c(
+const Emoji = e => z.emoji.g.ac(
     z._img({
         src: 'https://twemoji.maxcdn.com/2/72x72/'
             + emojis[e].char.codePointAt(0).toString(16)
             + '.png'
     }),
-    text.get() ? z.spl(`:${e}:`) : ''
+    text ? z.spl(`:${e}:`) : ''
 );
 
-let res = [], text = z.Val(true);
+let res = [], text = true;
 
-const Checkbox = val => z.checkbox({
-    class: { checked: val.get },
-    onclick(e) { val.set(!val.get()); z.update() }
-});
+const Checkbox = z.g.ac(
+    z.checkbox({
+        class: { checked: _ => text },
+        onclick(e) { text = !text; z.update() }
+    }),
+    z.v('Toggle names')
+);
 
 function find(e) {
     let value = e.target.value.toLowerCase();
@@ -129,12 +140,13 @@ function find(e) {
     z.update();
 }
 
-const Search = z.c(
+const Search = z.g.wrap.ac(
     z._input({ placeholder: 'Search', oninput: find }),
-    z.spl(Checkbox(text)), z.spl0('Toggle names'));
+    z.sp1(Checkbox)
+);
 const Emojis = _ => z.gr({
-    class: {text: text.get()}
-}, (text.get()
+    class: { text }
+}, (text
     ? res.slice(0, 20)
     : res.slice(0, 200)).map(Emoji));
 
@@ -341,8 +353,8 @@ const Header = z._header.header(
 );
 
 const Body = z('',
-    z._section.todoapp(Header, Main, _ => ids.length
-                       ? Footer : ''),
+    z._section.todoapp(Header, Main,
+        _ => ids.length ? Footer : ''),
     Info
 );
 z.setBody(Body);
@@ -496,26 +508,54 @@ z.setBody(Main);
 ``` demo
 // file: style.css
 body { background: #1a1f2c; font-family: sans-serif; }
-.tb { display: grid; grid-template-columns: repeat(18, 1fr);
+.tb { display: grid; grid-template-columns: repeat(18, 32px);
     grid-template-rows: repeat(10, 32px); }
+
 .rect { position: relative; }
 .el { position: absolute; width: 100%; height: 100%;
     color: #ffffff8c; cursor: pointer;}
 .el:hover { color: #fff; }
 .bg { position: absolute; width: 100%; height: 100%; }
 .el:hover .bg { opacity: .6; }
-.f0 { font-size: 16px; }
-.f1 { font-size: 12px; }
+
 .c0 { color: #ccc; }
 .c1 { color: #888; }
-.nu { position: absolute; top: 2px; left: 2px; font-size: 2%; }
-.s { position: absolute; font-size: 75%; top: 25%; width: 100%;
-    text-align: center; font-weight: bold; }
-.na { position: absolute; font-size: 10%; width: 100%;
-    bottom: 3px; text-align: center; }
-.tc { text-align: center; }
+
+.b { font-weight: bold; }
+
+.abs { position: absolute; }
+
+.f0 { font-size: 16px; }
+.f1 { font-size: 12px; }
+
+.f2 { font-size: 5px; } /* number */
+.f3 { font-size: 12px; } /* symbol */
+.f4 { font-size: 5px; } /* name */
+
+.m { margin: 2px; }
 .sp1 { margin-top: 10px; }
 .spl { margin-left: 16px; }
+
+@media (max-width: 400px) {
+    .tb { grid-template-columns: repeat(18, 18px);
+        grid-template-rows: repeat(10, 18px); }
+    .f0 { font-size: 12px; }
+    .f1 { font-size: 8px; }
+    .f2 { font-size: 4px; }
+    .f3 { font-size: 8px; } 
+    .f4 { font-size: 3px; }
+    .sp1 { margin-top: 5px; }
+    .m { margin: 1px; }
+}
+
+.w { width: 100%; }
+.h { height: 100%; }
+
+.g { display: flex; }
+.g.ac { align-items: center; }
+.g.ae { align-items: flex-end; }
+.g.jc { justify-content: center; }
+
 // file: index.js
 import z from 'https://blackmius.ru/shared/zombular.js';
 
@@ -557,7 +597,9 @@ const Element = el => rect(el.xpos, el.ypos)(
     z.el({
         onmousemove(e) { selected = el; z.update(); }
     }, z.bg({style: `background: ${colors[el.category]}`}),
-       z.nu(el.number), z.s(el.symbol), z.na(el.name))
+       z.abs.f2(z.m(el.number)),
+       z.abs.g.w.h.ac.jc.f3.b(el.symbol),
+       z.abs.g.w.h.ae.jc.f4(z.m(el.name)))
 );
 
 const prop = (title, val) => z.tc(
@@ -574,23 +616,241 @@ const Table = _ => z.tb(
                     style: `color: ${colors[selected.category]}`
                 }, selected.category)
         )),
-        rect(3, 2, 2)(prop('Phase', selected.phase)),
+        rect(3, 2, 2)(z.spl(prop('Phase', selected.phase))),
         rect(6, 2, 3)(prop('Atomic mass', selected.atomic_mass)),
         rect(10, 2, 2)(prop('Density', selected.density))
     ) : ''
 );
 
-z.setBody(Table);
+const Body = z.w.h.g.jc(Table);
+z.setBody(Body);
 ```
 
 # Kanban
 
 ``` demo
+// file: style.css
+body { margin: 0px; font-family: sans-serif;
+background: linear-gradient(#3eb9de, #3a80de);
+min-height: 400px}
+.cp { cursor: pointer; }
+.p { padding: 8px; }
+.m { margin: 8px; }
+.op { opacity: .5; }
+.br { border-radius: 4px; }
+.bg1 { background: #e5eff5; }
+.bg2 { background: #fff; }
+.c0 { color: #172b4d; }
+.c1 { color: #aaa; }
+.b { font-weight: bold; }
+.g { display: flex; }
+.mw0 { min-width: 200px; }
+.abs { position: absolute; }
+.h { height: 100%; }
+.w { width: 100%; }
+.ova { overflow: auto; }
+.hf { height: fit-content; }
+.ws { white-space: nowrap; }
+.nosel { user-select: none; }
+// file: card.js
+import z from 'https://blackmius.ru/shared/zombular.js';
+import { Editable } from './views.js';
+
+export let dragged;
+let preDragged;
+
+window.addEventListener('mouseup', e => {
+    dragged = preDragged = null;
+});
+
+window.addEventListener('mousemove', e => {
+   	if (!dragged && preDragged) {
+    	dragged = preDragged;
+    	z.update();
+    } 
+});
+
+function determineDirection(e, x, y){
+	const {width, height, left, top} = e.getBoundingClientRect();
+    x = (x - left - width/2) * (width > height ? height / width : 1);
+    y = (y - top - height/2) * (height > width ? width / height : 1);
+    return Math.round((((Math.atan2(y,x) * (180/Math.PI)) + 180)) / 90 + 3) % 4;
+}
+
+export class Card {
+    constructor() {
+        this.text = '';
+        this.edit = Editable(z.Ref(this, 'text'), this.destroy.bind(this));
+        this.board = null;
+    }
+    onmouseenter(e) {
+        if (!dragged) return;
+        dragged.destroy();
+        let { top, height } = e.target.getBoundingClientRect();
+        let offset = e.pageY - top - height / 2, pos;
+        let dir = determineDirection(e.target, e.pageX, e.pageY);
+        if (dir == 1 || dir == 3) pos = offset > 0;
+        else pos = offset < 0;
+        this.board.insert(dragged, this.board.cards.indexOf(this)+pos);
+    	z.update();
+    }
+    onmousedown(e) {
+    	preDragged = this;
+        z.update();
+    }
+    destroy() {
+        this.board.remove(this);
+    }
+    render() {
+        return z.p.m.bg2.br({
+        	card: true,
+            class: { op: dragged === this },
+            onmousedown: this.onmousedown.bind(this),
+            onmouseenter: this.onmouseenter.bind(this)
+        }, this.edit);
+    }
+}
+// file: board.js
+import z from 'https://blackmius.ru/shared/zombular.js';
+import { Editable } from './views.js';
+import { Card, dragged as draggedCard } from './card.js';
+
+export const boards = [];
+
+let dragged, preDragged;
+
+window.addEventListener('mouseup', e => {
+    dragged = preDragged = null;
+    z.update();
+});
+
+window.addEventListener('mousemove', e => {
+   	if (!dragged && preDragged) {
+    	dragged = preDragged;
+    	z.update();
+    } 
+});
+
+const dragCardHeight = 30;
+
+export class Board {
+    constructor() {
+        this.cards = [];
+        this.name = '';
+        this.edit = Editable(z.Ref(this, 'name'),
+        	this.destroy.bind(this));
+    }
+    destroy() {
+    	boards.splice(boards.indexOf(this), 1);
+    }
+    remove(card) {
+        this.cards.splice(this.cards.indexOf(card), 1);
+    }
+    insert(card, index) {
+        card.board = this;
+        this.cards.splice(index, 0, card);
+    }
+    create() {
+        this.insert(new Card(), this.cards.length);
+        z.update();
+    }
+    onmouseenter(e) {
+    	if (!dragged) return;
+        dragged.destroy();
+       	let { left, width } = e.target.getBoundingClientRect();
+        let pos = e.pageX - left - width / 2 < 0;
+        boards.splice(boards.indexOf(this)+pos, 0, dragged);
+        z.update();
+    }
+    onmouseenterlist(e) {
+    	if (!draggedCard) return;
+        let { top, height } = e.target.getBoundingClientRect();
+        const y = e.pageY - top;
+        if (y > dragCardHeight
+        	&& y < height - dragCardHeight) return;
+        draggedCard.destroy();
+        draggedCard.board = this;
+        let pos = y - height / 2 < 0;
+        if (pos) this.cards.splice(0, 0, draggedCard);
+        else this.cards.push(draggedCard);
+        z.update();
+    }
+    onmousedown(e) {
+    	if (e.path.some(e => e.hasAttribute
+        	&& e.hasAttribute('card'))) return;
+    	preDragged = this;
+        z.update();
+    }
+    render() {
+        return z({onmouseenter: this.onmouseenter.bind(this)},
+        	z.bg1.m.br.mw0({
+            	class: { op: dragged === this },
+            	onmousedown: this.onmousedown.bind(this),
+                onmouseenter: this.onmouseenterlist.bind(this)
+            },
+            	z.p(this.edit),
+                this.cards.map(c => c.render()),
+                z.sp1.cp.b.c1.p({
+                    onclick: e => this.create()
+                }, 'Add a card...')
+        ));
+    }
+}
 // file: index.js
 import z from 'https://blackmius.ru/shared/zombular.js';
-const Style = z._style(``);
-const Body = z('', Style);
+import { Board, boards } from './board.js';
+
+const Body = z.bg0.c0.g.abs.w.h.ova.nosel(
+    _ => boards.map(b => b.render()),
+    z.br.p.m.bg1.cp.c1.b.hf.ws({
+        onclick(e) {
+            boards.push(new Board());
+            z.update();
+        }
+    }, 'Add a list...')
+);
 z.setBody(Body);
+// file: views.js
+import z from 'https://blackmius.ru/shared/zombular.js';
+
+export const Input = (val, keyMap={}) => z._input({
+	value: val.get,
+    on$created(e) { setTimeout(_ => e.target.focus(), 0); },
+    onkeydown(e) {
+    	if (keyMap[e.keyCode]) {
+        	keyMap[e.keyCode]();
+            z.update();
+        }  	
+    },
+    onblur: keyMap.blur,
+    oninput(e) { val.set(e.target.value); z.update(); }
+});
+
+export function Editable(val, remove) {
+	let edit = true, prevVal, timer;
+    function enter() {
+    	edit = false;
+        if (!val.get() || !val.get().trim()) remove();
+    }
+    function esc() {
+        val.set(prevVal);
+            enter();
+    }
+    function open() {
+        prevVal = val.get();
+        edit = true;
+        z.update();
+    }
+    return _ => edit ? Input(val, {
+    	13: enter,
+        27: esc,
+        blur: esc
+    }) : z.cp({
+        ondblclick: open,
+        touchstart() { timer = setTimeout(open, 500); },
+        touchend() { if (timer) clearTimeout(timer); }
+    }, val.get());
+}
 ```
 
 # NPM trends
@@ -625,13 +885,16 @@ const dates = {
     'year': dateRange(day*365)
 }
 
-let range = 'week';
-
-let chart;
+let range = 'week', chart;
 
 function setData() {
 	if (!chart) return;
     let datasets = [], last = compare.length;
+    if (!compare.length) {
+        chart.data.datasets = [];
+        chart.update();
+        return;
+    }
 	compare.forEach(c => {
     	fetch(dw+dates[range]+'/'+c.name)
         .then(res => res.json())
@@ -654,8 +917,7 @@ function setData() {
     });
 }
 
-const C = _ => compare.length ? z('',
-z._p('Downloads in past ',
+const Range = _ => z._p('Downloads in past ',
     z._select.p0({
         value: range,
         oninput(e) {
@@ -664,34 +926,37 @@ z._p('Downloads in past ',
         }
     }, Object.keys(dates).map(
         p => z._option({ value: p }, p)))
-),
-z._canvas.sp1({
-	on$created(e) {
-    	chart = new Chart(e.target.getContext('2d'), {
-        	type: 'line',
-        	data: {},
-            options: {
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true
-                        }
-                    }],
-                    xAxes: [{
-                        type: 'time',
-                        display: true,
-                        scaleLabel: {
-                            display: true,
-                            labelString: "Date",
-                        }
-                    }],
+);
+
+const options = {
+	type: 'line',
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true
                 }
-            }
-        });
+            }],
+            xAxes: [{
+                type: 'time',
+                display: true,
+                scaleLabel: {
+                    display: true,
+                    labelString: "Date",
+                }
+            }],
+        }
+    }
+}
+
+const Plot = z._canvas.sp1({
+	on$created(e) {
+    	chart = new Chart(e.target.getContext('2d'), options);
         setData();
     }
-})
-) : '';
+});
+
+const C = _ => compare.length ? z.v(Range, Plot) : '';
 
 const randColor = _ => '#'
 	+ Math.floor(Math.random() * 0xffffff)
@@ -711,28 +976,8 @@ function comparePackage(pkg) {
     setData();
 }
 
-const Search = z.m(
-    z._input.p0.br({
-        value: _ => s, type: 'text', name: 'search',
-        class: _ => ({ focused: s }),
-        placeholder: 'Enter an npm package...',
-        oninput(e) {
-            s = e.target.value;
-			if (!s.trim()) {
-            	sgs = [];
-                z.update();
-            	return;
-            }
-            z.update();
-            fetch(sgURL + encodeURI(s))
-            .then(res => res.json())
-            .then(json => {
-                sgs = json;
-                z.update();
-            });
-        },
-    }),
-    _ => sgs.length ? z.sp1(sgs.map(
+const Suggestions = _ => sgs.length
+    ? z.sp1(sgs.map(
     	sg => z.p0.sg.cp.br({
         	onclick(e) {
                 sgs = [];
@@ -744,8 +989,10 @@ const Search = z.m(
         	z._b(sg.package.name),
             z.v(sg.package.description)
         )
-    )) : '',
-    _ => compare.length ? z.g.wrap(compare.map(
+    )) : '';
+
+const Compare = _ => compare.length
+    ? z.g.wrap(compare.map(
     	p => z.b0.p0.br.sp1({
         	style: `border-color: ${p.color}`
         }, z.g.ac(
@@ -757,9 +1004,44 @@ const Search = z.m(
                 }
             }, '×'))
         )
-    )) : ''
-);
+    )) : '';
 
+const Input = z._input.p0.br({
+    value: _ => s, type: 'text', name: 'search',
+    class: _ => ({ focused: s }),
+    placeholder: 'Enter an npm package...',
+    oninput(e) {
+        s = e.target.value;
+		if (!s.trim()) {
+        	sgs = [];
+            z.update();
+        	return;
+        }
+        z.update();
+        fetch(sgURL + encodeURI(s))
+        .then(res => res.json())
+        .then(json => {
+            sgs = json;
+            z.update();
+        });
+    },
+});
+
+const Search = z.m(Input, Suggestions, Compare);
+
+const TableCompare = c => z._tr(
+	z._td(z._a({ href: c.links.npm }, c.name)),
+    c.github ? [
+        z._td(c.github.starsCount),
+        z._td(c.github.forksCount),
+        z._td(c.github.issues.count)
+    ] : [z._td(),z._td(),z._td()],
+    z._td(c.date.slice(0, 10)),
+    z._td(
+    	z._a({ href: bp + c.name },
+        	z._img({src:mz+c.name})
+   	))
+);
 
 const Table = _ => compare.length
 	? z._table.sp1(
@@ -767,21 +1049,8 @@ const Table = _ => compare.length
         	'issues', 'updated', 'size'].map(
             t => z._th(t)
         )),
-        compare.map(c => z._tr(
-        	z._td(z._a({ href: c.links.npm }, c.name)),
-            c.github ? [
-                z._td(c.github.starsCount),
-                z._td(c.github.forksCount),
-                z._td(c.github.issues.count)
-            ] : [z._td(),z._td(),z._td()],
-            z._td(c.date.slice(0, 10)),
-            z._td(
-            	z._a({ href: bp + c.name },
-                	z._img({src:mz+c.name})
-           	))
-        ))
-    )
-    : '';
+        compare.map(TableCompare)
+    ) : '';
 
 const Info = z._p(
 	"The npm package download data comes from npm's ",
@@ -794,10 +1063,7 @@ const Info = z._p(
 
 const Body = z.m(
 	z._h1('Compare package download counts over time'),
-    Search,
-	C,
-    Table,
-    Info
+    Search, C, Table, Info
 );
 z.setBody(Body);
 // file: style.css
@@ -828,6 +1094,8 @@ select { border: 0; border-bottom: 1px solid;
 # Drum machine
 ``` demo
 // file: beats.js
+// original code https://github.com/siggy/beatboxer
+
 const bpm = 120, ticks = 8;
 const interval = 1 / (4 * bpm / (60 * 1000));
 
@@ -839,12 +1107,18 @@ const sounds = [
     '207/207957_19852-lq.mp3'
 ].map(s => prefix + s);
 
-// preload sounds
-sounds.forEach(s => new Audio(s));
+const buffers = new Array(sounds.length);
+sounds.forEach(
+    (s, i) => fetch(s)
+    .then(res => res.arrayBuffer())
+    .then(buf => buffers[i] = buf)
+);
 
 export const beats = new Array(sounds.length);
 for (let i = 0; i < beats.length; i++)
     beats[i] = new Array(ticks).fill(0);
+
+const audioCtx = new AudioContext();
 
 export const e = new Set();
 export let tick = 0;
@@ -857,7 +1131,14 @@ let prevTime = new Date().getTime();
     if (dt >= interval) {
     	for (let i = 0; i < sounds.length; i++)
             if (beats[i][tick])
-                new Audio(sounds[i]).play();
+                try {
+                    const source = audioCtx.createBufferSource();
+                    source.buffer = buffers[i];
+                    source.connect(audioCtx.destination);
+                    source.start();
+                } catch(e) {
+                    new Audio(sounds[i]).play();
+                }
         e.forEach(f=>f());
         tick = ++tick % ticks;
         prevTime = time;
@@ -900,6 +1181,9 @@ export default [{"name":"Cheese","description":"Mozzarella, marinara sauce, and 
 html { font-family: sans-serif; }
 body { padding: 45px 30px; }
 .g { display: flex; }
+.g.sp { margin-left: -1.5em; }
+.g.sp > * { margin-left: 1.5em; }
+.g.sp > .g.sp { margin-left: 0; }
 .g.wrap { flex-wrap: wrap; }
 .g.col { flex-direction: column; }
 .s1 { flex: 1; }
@@ -912,9 +1196,6 @@ body { padding: 45px 30px; }
 .sp0 { margin-top: 0px; }
 .sp1 { margin-top: 15px; }
 .sp2 { margin-top: 30px; }
-.spl { margin-left: 15px; }
-.spl2 { margin-left: 30px; }
-.spl3 { margin-left: 45px; }
 a { color: black; text-decoration: none; position: relative;
     overflow: hidden; padding: 5px; }
 a:after { content: ''; border-bottom: 1px solid; bottom: 0px;
@@ -939,15 +1220,15 @@ const lost = z.g.h.w.ac.jc(z.v(
     // and our delivery will find you
 ));
 
-const Adder = size => z.v.g.ac.wrap.row(
+const Adder = size => z.v.g.ac.sp(
     z._button({
         onclick(e) {
             size.count--;
             z.update();
         }
     }, '-'),
-    z.v.spl(size.count),
-    z._button.spl({
+    z.v(size.count),
+    z._button({
         onclick(e) {
             size.count++;
             z.update();
@@ -959,7 +1240,7 @@ const sizes = ["10''", "12''", "14''"];
 
 const price = n => '$' + n.toFixed(2);
 
-const Pizza = pizza => z.w0.sp2.g.col.spl3(
+const Pizza = pizza => z.w0.sp2.g.col(
     z.v(
         z._img({src: pizza.sizes[pizza.size].photo, width: '100%'}),
         z._h2(pizza.name),
@@ -980,55 +1261,57 @@ const Pizza = pizza => z.w0.sp2.g.col.spl3(
                         pizza.sizes[pizza.size].count = 1;
                         z.update();
                     }
-                }, 'Add to busket')
+                }, 'Add to basket')
         )
     )
 );
 
 const Menu = z.m(
-    z._a({ href: '#basket' }, 'Busket'),
-    _ => z.g.wrap.row.jc(pizzas.map(Pizza))
+    z._a({ href: '#basket' }, 'Basket'),
+    _ => z.g.wrap.jc.sp(pizzas.map(Pizza))
 );
 
-const BasketItem = (pizza, size, si) => z.sp2.g(
+const BasketItem = (pizza, size, si) => z.sp2.g.sp.ac(
     z._img({src: size.photo, height: '100px'}),
-    z.g.ac.spl.row.s1(
-        z.v.spl(
+    z.g.ac.s1.sp.wrap(
+        z.v(
             z.title('Name'),
             z._h2.sp0(pizza.name + ' ' + sizes[si]),
             z.title('Price'),
             z._span(size.count, ' * ', price(size.price), ' = '),
             z._b(price(size.count * size.price))),
-        z.s1.spl2(),
-        Adder(size),
-        z._button.spl({
-            onclick(e) {
-                size.count = 0;
-                z.update();
-            }
-        }, 'remove'))
+        z.s1(),
+        z.g.sp.sp1(
+            Adder(size),
+            z._button({
+                onclick(e) {
+                    size.count = 0;
+                    z.update();
+                }
+            }, 'remove')
+        ))
 );
 
-const EmptyBusket = z.g.h.w.ac.jc(z.v(
+const EmptyBasket = z.g.h.w.ac.jc(z.v(
     z._h1('Basket is empty'),
     z.g.jc(z._a({ href: '#' }, 'Back to menu'))
 ));
 
 function Basket() {
-    const busket = [];
+    const basket = [];
     let sum = 0;
     pizzas.forEach(p => {
         p.sizes.forEach((s, i) => {
             if (s.count) {
-                busket.push(BasketItem(p, s, i));
+                basket.push(BasketItem(p, s, i));
                 sum += s.count * s.price;
             }
         });
     });
-    if (busket.length == 0) return EmptyBusket;
+    if (basket.length == 0) return EmptyBasket;
     return z.g.jc(
-        z.w1(busket,
-            z.g.sp2.row(z.s1(), z._span('Total: '), z._b(price(sum))),
+        z.w1(basket,
+            z.g.sp.sp2(z.s1(), z._span('Total: '), z._b(price(sum))),
             z.g.sp1(z._a({ href: '#' }, 'Back to menu'),
                 z.s1(),
                 z._button('Order')))
@@ -1047,9 +1330,240 @@ z.setBody(Body);
 # SVG path builder
 
 ``` demo
+// file: style.css
+body { margin: 0; font-family: sans-serif; }
+.p0 { padding: 4px 8px; }
+.p1 { padding: 8px 16px; }
+.p2 { padding: 32px; }
+.p3 { padding: 5px; }
+.w0 { width: 40px; }
+.w1 { width: 200px; }
+.tc { text-align: center; }
+.br0 { border-radius: 4px; }
+.brh { border-radius: 1rem; }
+.abs { position: absolute; }
+.z1 { z-index: 1; }
+.b0 { border: 5px solid; }
+.c0 { color: #fff; }
+.c1 { color: #f7f7f7; }
+.c2 { color: #00e676; }
+.c3 { color: #666; }
+.uc { text-transform: uppercase; }
+.bg0 { background: #222; }
+.bg2 { background: #111; }
+.bg1 { background: #444; }
+.h { transition: background .3s;}
+.bg1.h:hover { background: #666; }
+.cp { cursor: pointer; }
+input, button, select { background: 0; border: 0; outline: 0;
+    font-size: inherit; }
+button { user-select: none; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+.sp1 { margin-top: 4px; }
+.sp4 { margin-top: 16px; }
+.g { display: flex; }
+.g.ac { align-items: center; }
+.g.wrap { flex-wrap: wrap; }
+.g.col { flex-direction: column; }
+.g.sp { margin-left: -1.5em; }
+.g.sp > * { margin-left: 1.5em; }
+.g.sp > .g.sp { margin-left: 0; }
+.s1 { flex: 1; }
+.f0 { font-size: 8px; }
+.f1 { font-size: 12px; }
+path { stroke: #222; }
 // file: index.js
 import z from 'https://blackmius.ru/shared/zombular.js';
-const Style = z._style(``);
-const Body = z('', Style);
+
+const settings = {
+    width: 300,
+    height: 300,
+    'stroke-width': 2,
+    'start x': 0,
+    'start y': 0,
+    fill: false,
+    close: true,
+}
+
+const typePropType = {
+    x: Number, y: Number, cx: Number, cy: Number,
+    scx: Number, scy: Number, rx: Number,
+    ry: Number, rt: Number, las: Boolean, s: Boolean
+}
+
+const typePropNames = {
+    'x': 'Point x',
+    'y': 'Point y',
+    'cx': 'Control point x',
+    'cy': 'Control point y',
+    'scx': 'Second control point x',
+    'scy': 'Second control point y',
+    'rx': 'Radius x',
+    'ry': 'Radius y',
+    'rt': 'Rotation',
+    'las': 'Large arc sweep',
+    's': 'Sweep'
+}
+
+const types = {
+    'M': ['x', 'y'],
+    'L': ['x', 'y'],
+    'H': ['x'],
+    'V': ['y'],
+    'Q': ['x', 'y', 'cx', 'cy'],
+    'T': ['x', 'y', 'cx', 'cy'],
+    'C': ['x', 'y', 'cx', 'cy', 'scx', 'scy'],
+    'S': ['x', 'y', 'cx', 'cy', 'scx', 'scy'],
+    'A': ['x', 'y', 'rx', 'ry', 'rt', 'las', 's']
+}
+
+const typeNames = {
+    'M': 'Move', 'L': 'Line',
+    'H': 'Horizontal line',
+    'V': 'Vertical line',
+    'Q': 'Quadratic Bézier curve',
+    'T': 'Smooth quadratic Bézier curve',
+    'C': 'Curve',
+    'S': 'Smooth curve', 
+    'A': 'Elliptical Arc'
+}
+
+class Path {
+    constructor(type, args=[]) {
+        this.args = args;
+        this.type = type;
+    }
+    set type(value) {
+        this.type_ = value;
+        types[this.type_].forEach((p, i) => {
+            this[p] = this.args[i] || typePropType[p]();
+        });
+        this.args = [];
+    }
+    get type() { return this.type_; }
+    get d() {
+        return this.type + ' ' + types[this.type].map(
+            p => Number(this[p])
+        ).join(' ');
+    }
+}
+
+const d = _ => 'M ' + settings['start x'] + ' '
+    + settings['start y'] + (paths.length ? ' ' : '')
+    + paths.map(p => p.d).join(' ')
+    + (settings.close ? ' Z' : '');
+
+let paths = [];
+
+const Button = (text, onclick) =>
+    z._button.bg1.h.cp.c1.p1.brh({ onclick }, text);
+    
+const Checkbox = val => z.g.cp.ac.w0({
+    onclick(e) {
+        val.set(!val.get());
+        z.update();
+    }
+},
+    z.bg1.brh.p1.abs(),
+    _ => val.get() ? z.p0() : '',
+    z.p3.b0.brh.c0.bg1.z1({
+        class: _=> ({c2: val.get()})
+    })
+);
+
+const NumberInput = val =>
+z._input.bg1.p0.c0.br0.w0.tc({
+    value: val.get, type: 'number',
+    oninput(e) {
+        val.set(Number(e.target.value));
+        z.update();
+    }
+});
+
+const Select = (val, options) =>
+z._select.bg1.p0.c0.br0.cp({
+    value: val.get,
+    oninput(e) {
+        val.set(e.target.value);
+        z.update();
+    }
+}, options.map(
+    value => z._option({ value }, value)
+));
+
+const Titled = (text, c) => z.v(
+    z.c1.uc.f0(text),
+    z.sp1(c)
+);
+
+const Setting = s => z.sp4(Titled(s,
+    typeof settings[s] === 'number'
+        ? NumberInput(z.Ref(settings, s))
+    : typeof settings[s] === 'boolean'
+        ? Checkbox(z.Ref(settings, s))
+        : ''
+));
+
+const Settings = z.sp4(
+    z.c0.f1('Parameters'),
+    z.g.sp.wrap.w1(Object.keys(settings).map(Setting)),
+    z.sp4(),
+    Button('Add path', _ => {
+        paths.push(new Path('M'));
+        z.update();
+    })
+);
+
+const Parameter = (path, p) => z.sp4(Titled(
+    typePropNames[p],
+    typePropType[p] == Number
+        ? NumberInput(z.Ref(path, p))
+        : typePropType[p] == Boolean
+        ? Checkbox(z.Ref(path, p))
+        : ''
+));
+
+const Parameters = (path, i) => z.sp4.g.col(
+    z.c0.f1(typeNames[path.type]),
+    z.sp4(),
+    Titled('type',
+        Select(z.Ref(path, 'type'), Object.keys(types)),
+    ),
+    types[path.type].map(p => Parameter(path, p)),
+    z.sp4(),
+    z.s1(),
+    Button('Remove', _ => {
+        paths.splice(paths.indexOf(path), 1);
+        z.update();
+    })
+);
+
+const Result = z.sp4.bg2.br0.p0(
+    z.c3('<path d="'),
+    z.c0(d),
+    z.c3('" />')
+);
+
+const Menu = z.p2.bg0.f1.br0(
+    z.g.wrap.sp(
+        Settings,
+        _ => paths.map(Parameters),
+    ),
+    z.c0.f1.sp4('Result'),
+    Result
+);
+
+const SVG = _ => z._svg.sp4({
+    width: settings.width,
+    height: settings.height
+}, z._path({
+    'stroke-width': settings['stroke-width'],
+    fill: settings.fill ? '#222' : 'none', d
+}));
+
+const Body = z.g.col(Menu, z.s1(SVG));
 z.setBody(Body);
 ```
