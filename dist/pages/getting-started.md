@@ -1,13 +1,36 @@
-# Getting started
-
-Zombular is a powerful javascript micro-framework for building web applications
-faster and reliable.
-
-If your already read this document I will stop making you impatient.
+If you already have read this document I will stop making you impatient.
 [sources](https://blackmius.ru/shared/sources.zip)
 [minified](https://blackmius.ru/shared/zombular.js)
 
-The Zombular `Hello World` program looks like this:
+# Getting started
+
+Zombular is a powerful javascript micro-framework for building web applications
+faster and reliable created in 2015 by Michael Lazarev.
+
+What zombular Author saying about his framework (read with theater pafos)
+>Zombular is supercombinatoric higher metaframework neither simple tag drawer.
+It is crafted out of necessity to define metacomponents that can create interfaces on the fly from defines placed in database and created with interactive programming enviroment.
+
+## Features
+
+1. blazing fast
+
+    Zombular uses [cito.js](https://github.com/joelrich/citojs) that is one of
+    the fastest virtual DOM library
+
+2. Does not use moron xml in js
+3. Lightweight
+
+    18 kb (minified)
+    
+    6.5 kb (mingzip)
+
+4. Easy to use
+
+    You just import the library and it works
+## Example
+
+The Zombular simpliest `Hello World` program looks like this:
 
 ``` demo
 // file: index.js
@@ -51,9 +74,11 @@ const Body = z('',
 z.setBody(Body);
 ```
 
+As you can see all your wants can be interpretended in few lines with zombular.
+
 # Z function
 
-So, this is the least examples what you can do with Zombular. And if you reached
+This is the least examples what you can do with Zombular. And if you reached
 here and didn't close the tab let's consider it's API quite closer.
 
 The `z` function first argument is string or object specification which determine
@@ -419,4 +444,13 @@ const Body = z('',
 
 z.setBody(Body);
 ```
+
+# What next?
+
+It seems you reached the end of tutorial. If you thirsting in more examples
+I maked few for you.
+
+[More Examples](https://blackmius.ru/articles/#article;slug=zombular-examples)
+
+enjoy <3
 

@@ -1,3 +1,12 @@
+# Introdution
+
+This is 10 zombular examples showing the beaty of it's usage on practice.
+
+if you have not familiared with zombular yet you should be read
+[zombular getting started tutorial](https://blackmius.ru/articles/#article;slug=getting-started) before trying to understand examples (I warned you).
+
+Let's gaze upon it's beaty though.
+
 # Calculator
 
 ``` demo
@@ -6,13 +15,14 @@ import z from 'https://blackmius.ru/shared/zombular.js';
 
 let res = '0';
 
-const cal = e => {
+const cal = _ => {
     try {
         res = eval(res || '0');
         if (res == Infinity || res == -Infinity)
             throw new Error();
     } catch(e) { res = 'Error'; }
 }
+
 const clr = e => res = '0';
 const add = n => e => {
     if (res == '0' || res == 'Error') res = n;
@@ -113,15 +123,6 @@ fetch('https://unpkg.com/emojilib@2.4.0/emojis.json')
     z.update();
 });
 
-const Emoji = e => z.emoji.g.ac(
-    z._img({
-        src: 'https://twemoji.maxcdn.com/2/72x72/'
-            + emojis[e].char.codePointAt(0).toString(16)
-            + '.png'
-    }),
-    text ? z.spl(`:${e}:`) : ''
-);
-
 let res = [], text = true;
 
 const Checkbox = z.g.ac(
@@ -144,13 +145,23 @@ const Search = z.g.wrap.ac(
     z._input({ placeholder: 'Search', oninput: find }),
     z.sp1(Checkbox)
 );
-const Emojis = _ => z.gr({
-    class: { text }
-}, (text
-    ? res.slice(0, 20)
-    : res.slice(0, 200)).map(Emoji));
 
-const Body = z('', Search, z._hr(), Emojis);
+const Emoji = e => z.emoji.g.ac(
+    z._img({
+        src: 'https://twemoji.maxcdn.com/2/72x72/'
+            + emojis[e].char.codePointAt(0).toString(16)
+            + '.png'
+    }),
+    text ? z.spl(`:${e}:`) : ''
+);
+
+const Emojis = _ => z.gr({ class: { text }},
+    (text
+        ? res.slice(0, 20)
+        : res.slice(0, 200)).map(Emoji)
+);
+
+const Body = z.v(Search, z._hr(), Emojis);
 z.setBody(Body);
 ```
 
@@ -183,7 +194,12 @@ export function get(id, prop) {
 export function set(id, prop, value) {
     storage[id+prop] = value;
 }
-export function newid() { return ++id; }
+export function newid() {
+    let id_ = ++id;
+    ids.push(id_);
+    storage['ids'] = ids;
+    return id_;
+}
 
 
 // file: todo.js
@@ -192,17 +208,12 @@ import { storage, get, set, newid, ids } from './storage.js';
 
 export class Todo {
     constructor(data) {
-        if (typeof data == 'object') {
-            this.id = newid();
-            ids.push(this.id);
-            storage['ids'] = ids;
-            data.id = this.id;
-            Object.entries(data).forEach(
-                ([key, val]) => set(this.id, key, val));
-            z.update();
-        } else {
+        if (typeof data == 'number') {
             if (ids.includes(data)) this.id = data;
             else throw new Error('unknown id'); 
+        } else {
+            this.id = newid();
+            set(this.id, 'id', this.id);
         }
         return new Proxy(this, {
             get(t, p) {
@@ -257,40 +268,39 @@ const Info = z._footer.info(
 const flist = [['All', all], ['Active', active],
                ['Completed', completed]];
 
-const Filters = z._ul.filters(
-    flist.map(
-        ([text, f]) => z._li(
-            z._a({
-                href: '#',
-                class: { selected: _ => filter == f },
-                onclick(e) { filter = f; z.update(); }
-            }, _ => text)
-        )
-    )
+const Filter = ([text, f]) => z._li(
+    z._a({
+        href: '#',
+        class: { selected: _ => filter == f },
+        onclick(e) { filter = f; z.update(); }
+    }, _ => text)
+)
+
+const Filters = z._ul.filters(flist.map(Filter));
+
+const TodoCount = z._span['todo-count'](
+    z._strong(remaining),
+    _ => remaining() === 1
+        ? ' item'
+        : ' items',
+    ' left'
 );
 
-const Footer = z._footer.footer(
-    _ => z._span['todo-count'](
-        z._strong(remaining),
-        remaining() === 1 ? ' item' : ' items',
-    ' left'),
-    Filters,
-    _ => completed().length
-        ? z._button['clear-completed']({
-            onclick(e) {
-              completed().forEach(i => i.remove()); }
-        }, 'Clear completed')
-        : ''
-);
+const ClearCompleted = _ => completed().length
+    ? z._button['clear-completed']({
+        onclick(e) {
+            completed().forEach(i => i.remove());
+        }
+    }, 'Clear completed')
+    : '';
+
+const Footer = _ => ids.length
+    ? z._footer.footer(TodoCount, Filters, ClearCompleted)
+    : ''
 
 const edit = {};
 
-const TodoEl = todo => z._li.todo({
-    class: {
-        completed: todo.completed,
-        editing: edited ? todo.id == edited.id : false,
-    }
-}, z.view(
+const TodoView = todo => z.view(
     z._input.toggle({
         type: 'checkbox',
         onchange(e) { todo.completed = e.target.checked; },
@@ -306,56 +316,67 @@ const TodoEl = todo => z._li.todo({
     z._button.destroy({
         onclick(e) { todo.remove(); }
     })
-),
-    z._input.edit({
-        value: todo.title,
-        on$created(e) { edit[todo.id] = e.target; },
-        onblur: cancelEdit,
-        onkeyup(e) {
-            if (e.keyCode == 13) {
-                edited = null;
-                let val = e.target.value.trim();
-                if (!val) todo.remove();
-                else todo.title = val;
-            } else if (e.keyCode == 27 ) cancelEdit();
-        }
-    })
-)
-
-const Main = _ => ids.length ? z._section.main(
-    z._input['toggle-all']({
-        id: 'toggle-all', type: 'checkbox',
-        checked: !remaining(),
-        oninput(e) {
-          all().forEach(
-            i => i.completed = e.target.checked); }
-    }),
-    z._label({for: 'toggle-all'}),
-    z._ul['todo-list']( _ => filter().map(TodoEl) )
-) : '';
-
-const Header = z._header.header(
-    z._h1('todos'),
-    z._input['new-todo']({
-        placeholder: "What needs to be done?",
-        onkeydown(e) {
-            if (e.keyCode == 13) {
-                let value = e.target.value.trim();
-                if (value) {
-                    new Todo({
-                      title: value,
-                      completed: false });
-                    e.target.value = '';
-                }
-            } 
-        }
-    })
 );
 
-const Body = z('',
-    z._section.todoapp(Header, Main,
-        _ => ids.length ? Footer : ''),
-    Info
+const TodoEdit = todo => z._input.edit({
+    value: todo.title,
+    on$created(e) { edit[todo.id] = e.target; },
+    onblur: cancelEdit,
+    onkeyup(e) {
+        if (e.keyCode == 13) {
+            edited = null;
+            let val = e.target.value.trim();
+            if (!val) todo.remove();
+            else todo.title = val;
+        } else if (e.keyCode == 27 ) cancelEdit();
+    }
+});
+
+const TodoEl = todo => z._li.todo({
+    class: {
+        completed: todo.completed,
+        editing: edited && todo.id == edited.id
+    }
+}, TodoView(todo), TodoEdit(todo));
+
+const ToggleAll = z._input['toggle-all']({
+    id: 'toggle-all', type: 'checkbox',
+    checked: _ => !remaining(),
+    oninput(e) {
+        all().forEach(i => i.completed = e.target.checked);
+    }
+});
+
+const ToggleAllLabel = z._label({for: 'toggle-all'});
+
+const TodoList = _ => z._ul['todo-list'](filter().map(TodoEl));
+
+const Main = _ => ids.length
+    ? z._section.main(ToggleAll, ToggleAllLabel, TodoList)
+    : '';
+
+const NewTodo = z._input['new-todo']({
+    placeholder: "What needs to be done?",
+    onkeydown(e) {
+        if (e.keyCode == 13) {
+            let value = e.target.value.trim();
+            if (value) {
+                Object.assign(new Todo(), {
+                    title: value,
+                    completed: false
+                });
+                e.target.value = '';
+            }
+        }
+    }
+});
+
+const Header = z._header.header(
+    z._h1('todos'), NewTodo
+);
+
+const Body = z.v(
+    z._section.todoapp(Header, Main, Footer), Info
 );
 z.setBody(Body);
 
@@ -387,9 +408,7 @@ body { background: #bdbdbd; font-family: monospace; text-align: center; }
 .st { font-size: 18px; display: flex; justify-content: center;
     align-items: center; width: 32px; }
 
-// file: index.js
-import z from 'https://blackmius.ru/shared/zombular.js';
-
+// file: game.js
 const randint = n => Math.floor(Math.random() * n);
 
 const neighbors = [[-1, -1], [0, -1], [1, -1], [-1, 0],
@@ -414,21 +433,21 @@ function initMap(w, h, b) {
     return res;
 }
 
-let width = 9, height = 9, bombs = 10;
-let flags, win, loose, map, time, timer;
+let width = 9, height = 9, bombs = 10, timer;
+export let flags, win, loose, map, time;
+export const tick = new Set();
 
-function restart() {
+export function restart() {
     map = initMap(width, height, bombs);
     win = loose = false;
     flags = bombs;
     time = 0;
     timer = null;
-    z.update();
 }
 
 restart();
 
-function fill(x, y) {
+export function fill(x, y) {
     if (!(-1 < x && x < width
        && -1 < y && y < height)) return;
     if (map[y][x].o) return;
@@ -437,7 +456,7 @@ function fill(x, y) {
     neighbors.forEach(([dx, dy]) => fill(x+dx, y+dy));
 }
 
-function open(x, y) {
+export function open(x, y) {
     if (map[y][x].f) return;
     if (map[y][x].n == 9) {
         loose = true;
@@ -445,10 +464,9 @@ function open(x, y) {
     } else if (map[y][x].n > 0) {
         map[y][x].o = true;
     } else fill(x, y);
-    z.update();
 }
 
-function flag(x, y) {
+export function flag(x, y) {
     if (map[y][x].o) return;
     if (map[y][x].f) {
         map[y][x].f = false;
@@ -460,43 +478,58 @@ function flag(x, y) {
     }
     win = map.bombs.every(b => b.f);
     if (win) clearInterval(timer);
-    z.update();
 }
+
+export function startTimer() {
+    if (time == 0 && !timer)
+        timer = setInterval(_ => {
+            time += 1;
+            tick.forEach(i => i());
+        }, 1000);
+}
+
+// file: index.js
+import z from 'https://blackmius.ru/shared/zombular.js';
+import { flags, win, loose, map, open, flag, tick,
+    time, startTimer, restart } from './game.js';
+
+tick.add(z.update);
 
 const pad = (n, l) => (''+n).padStart(l, '0');
 
-const Disp = _ => z.disp.b1.g.js(
-    z.scr(pad(flags, 2)),
-    z.b0.st.cp({
-        class: { cp: win || loose },
-        onclick(e) { if (win || loose) restart(); }
-    }, loose ? '\u{1F628}' : win
-               ? '\u{1F63a}' : '\u{1F60A}'),
-    z.scr(pad(time, 3))
-);
+const Flags = _ => z.scr(pad(flags, 2));
 
-const Grid = z.grid.ib.b1(_ => map.map(
-    (row, y) => z.g(row.map(
-        ({f, o, n}, x) => z.cell.b0({
-            class: {
-                cp: !o, bomb: loose && n == 9,
-                flag: f, open: o, ['l'+n]: o },
-            onmousedown(e) {
-                if (win || loose) return;
-                if (time == 0 && !timer)
-                  timer = setInterval( _ => {
-                    time += 1;
-                    z.update();
-                }, 1000);
-                if (e.which == 1) open(x, y);
-                else if (e.which == 3) flag(x, y);
-            },
-            oncontextmenu(e) { e.preventDefault(); }
-        }, o && n ? n :
-            f ? "\u2691" : loose && n == 9
-                                    ? "\uD83D\uDCA3" : '')
-    ))
-));
+const Smile = _ => z.b0.st.cp({
+    class: { cp: win || loose },
+    onclick(e) {
+        if (win || loose) restart();
+        z.update();
+    }
+}, loose ? '\u{1F628}' : win ? '\u{1F63a}' : '\u{1F60A}');
+
+const Time = _ => z.scr(pad(time, 3));
+
+const Disp = z.disp.b1.g.js(Flags, Smile, Time);
+
+const Cell = ({f, o, n}, x, y) => z.cell.b0({
+    class: {
+        cp: !o, bomb: loose && n == 9,
+        flag: f, open: o, ['l'+n]: o
+    },
+    onmousedown(e) {
+        if (win || loose) return;
+        startTimer();
+        if (e.which == 1) open(x, y);
+        else if (e.which == 3) flag(x, y);
+        z.update();
+    },
+    oncontextmenu(e) { e.preventDefault(); }
+}, o && n ? n : f ? "\u2691" :
+    loose && n == 9 ? "\uD83D\uDCA3" : '');
+
+const Row = (row, y) => z.g(row.map((c, x) => Cell(c, x, y)));
+
+const Grid = z.grid.ib.b1(_ => map.map(Row));
 
 const Main = z.main.b0.ib(Disp, Grid);
 z.setBody(Main);
@@ -599,16 +632,21 @@ const Element = el => rect(el.xpos, el.ypos)(
     }, z.bg({style: `background: ${colors[el.category]}`}),
        z.abs.f2(z.m(el.number)),
        z.abs.g.w.h.ac.jc.f3.b(el.symbol),
-       z.abs.g.w.h.ae.jc.f4(z.m(el.name)))
+       z.abs.g.w.h.ae.jc.f4(z.m(el.name))
+    )
 );
 
-const prop = (title, val) => z.tc(
-    z.f1.c1.sp1(title), z.f0.c0.sp1(val || 'undefined')
-)
+const Elements = _ => data
+    ? data.map(Element)
+    : '';
 
-const Table = _ => z.tb(
-    data ? data.map(Element) : '',
-    selected ? z('',
+const prop = (title, val) => z.tc(
+    z.f1.c1.sp1(title),
+    z.f0.c0.sp1(val || 'undefined')
+);
+
+const Selected = _ => selected
+    ? z('',
         rect(3, 1, 10)(
             z.spl(
                 z.f0.c0(selected.number, ' - ', selected.name),
@@ -619,10 +657,12 @@ const Table = _ => z.tb(
         rect(3, 2, 2)(z.spl(prop('Phase', selected.phase))),
         rect(6, 2, 3)(prop('Atomic mass', selected.atomic_mass)),
         rect(10, 2, 2)(prop('Density', selected.density))
-    ) : ''
-);
+    )
+    : '';
 
-const Body = z.w.h.g.jc(Table);
+const Table = z.tb(Elements, Selected);
+
+const Body = z.w.g.jc(Table);
 z.setBody(Body);
 ```
 
@@ -649,12 +689,12 @@ min-height: 400px}
 .h { height: 100%; }
 .w { width: 100%; }
 .ova { overflow: auto; }
-.hf { height: fit-content; }
+.hf { height: max-content; }
 .ws { white-space: nowrap; }
 .nosel { user-select: none; }
 // file: card.js
 import z from 'https://blackmius.ru/shared/zombular.js';
-import { Editable } from './views.js';
+import { Editable } from './editable.js';
 
 export let dragged;
 let preDragged;
@@ -670,17 +710,19 @@ window.addEventListener('mousemove', e => {
     } 
 });
 
+const rad = 180 / Math.PI;
 function determineDirection(e, x, y){
 	const {width, height, left, top} = e.getBoundingClientRect();
     x = (x - left - width/2) * (width > height ? height / width : 1);
     y = (y - top - height/2) * (height > width ? width / height : 1);
-    return Math.round((((Math.atan2(y,x) * (180/Math.PI)) + 180)) / 90 + 3) % 4;
+    return Math.round((Math.atan2(y, x) * rad + 180) / 90 + 3) % 4;
 }
 
 export class Card {
     constructor() {
         this.text = '';
-        this.edit = Editable(z.Ref(this, 'text'), this.destroy.bind(this));
+        this.edit = Editable(z.Ref(this, 'text'),
+            this.destroy.bind(this));
         this.board = null;
     }
     onmouseenter(e) {
@@ -712,7 +754,7 @@ export class Card {
 }
 // file: board.js
 import z from 'https://blackmius.ru/shared/zombular.js';
-import { Editable } from './views.js';
+import { Editable } from './editable.js';
 import { Card, dragged as draggedCard } from './card.js';
 
 export const boards = [];
@@ -810,18 +852,13 @@ const Body = z.bg0.c0.g.abs.w.h.ova.nosel(
     }, 'Add a list...')
 );
 z.setBody(Body);
-// file: views.js
+// file: editable.js
 import z from 'https://blackmius.ru/shared/zombular.js';
 
-export const Input = (val, keyMap={}) => z._input({
+const Input = (val, keyMap={}) => z._input({
 	value: val.get,
     on$created(e) { setTimeout(_ => e.target.focus(), 0); },
-    onkeydown(e) {
-    	if (keyMap[e.keyCode]) {
-        	keyMap[e.keyCode]();
-            z.update();
-        }  	
-    },
+    onkeydown: e => keyMap[e.keyCode] && keyMap[e.keyCode](),
     onblur: keyMap.blur,
     oninput(e) { val.set(e.target.value); z.update(); }
 });
@@ -831,24 +868,20 @@ export function Editable(val, remove) {
     function enter() {
     	edit = false;
         if (!val.get() || !val.get().trim()) remove();
+        z.update();
     }
     function esc() {
         val.set(prevVal);
-            enter();
+        enter();
     }
-    function open() {
-        prevVal = val.get();
-        edit = true;
-        z.update();
-    }
-    return _ => edit ? Input(val, {
-    	13: enter,
-        27: esc,
-        blur: esc
-    }) : z.cp({
-        ondblclick: open,
-        touchstart() { timer = setTimeout(open, 500); },
-        touchend() { if (timer) clearTimeout(timer); }
+    return _ => edit
+    ? Input(val, {13: enter, 27: esc, blur: esc})
+    : z.cp({
+        ondblclick() {
+            prevVal = val.get();
+            edit = true;
+            z.update();
+        }
     }, val.get());
 }
 ```
@@ -858,7 +891,8 @@ export function Editable(val, remove) {
 // file: index.js
 import z from 'https://blackmius.ru/shared/zombular.js';
 
-import 'https://blackmius.ru/shared/moment.js'
+// moment.js doesn't work as es6 module
+import 'https://blackmius.ru/shared/moment.js';
 import 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.js';
 
 const sgURL = 'https://api.npms.io/v2/search/suggestions?size=5&q=';
@@ -932,11 +966,7 @@ const options = {
 	type: 'line',
     options: {
         scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero: true
-                }
-            }],
+            yAxes: [{ ticks: { beginAtZero: true } }],
             xAxes: [{
                 type: 'time',
                 display: true,
@@ -956,7 +986,9 @@ const Plot = z._canvas.sp1({
     }
 });
 
-const C = _ => compare.length ? z.v(Range, Plot) : '';
+const C = _ => compare.length
+    ? z.v(Range, Plot)
+    : '';
 
 const randColor = _ => '#'
 	+ Math.floor(Math.random() * 0xffffff)
@@ -976,35 +1008,37 @@ function comparePackage(pkg) {
     setData();
 }
 
-const Suggestions = _ => sgs.length
-    ? z.sp1(sgs.map(
-    	sg => z.p0.sg.cp.br({
-        	onclick(e) {
-                sgs = [];
-                s = '';
-                comparePackage(sg.package);
-                z.update();
-            }
-        },
-        	z._b(sg.package.name),
-            z.v(sg.package.description)
-        )
-    )) : '';
+const Suggestion = sg => z.p0.sg.cp.br({
+	onclick(e) {
+        sgs = [];
+        s = '';
+        comparePackage(sg.package);
+        z.update();
+    }
+},
+	z._b(sg.package.name),
+    z.v(sg.package.description)
+);
 
-const Compare = _ => compare.length
-    ? z.g.wrap(compare.map(
-    	p => z.b0.p0.br.sp1({
-        	style: `border-color: ${p.color}`
-        }, z.g.ac(
-            z.v(p.name), z.cp({
-                onclick(e) {
-                    compare.splice(compare.indexOf(p), 1);
-                   	setData();
-                    z.update();
-                }
-            }, '×'))
-        )
-    )) : '';
+const Suggestions = _ => sgs.length
+    ? z.sp1(sgs.map(Suggestion))
+    : '';
+
+const Compare = p => z.b0.p0.br.sp1({
+	style: `border-color: ${p.color}`
+}, z.g.ac(
+    z.v(p.name), z.cp({
+        onclick(e) {
+            compare.splice(compare.indexOf(p), 1);
+           	setData();
+            z.update();
+        }
+    }, '×'))
+);
+
+const Compares = _ => compare.length
+    ? z.g.wrap(compare.map(Compare))
+    : '';
 
 const Input = z._input.p0.br({
     value: _ => s, type: 'text', name: 'search',
@@ -1027,7 +1061,7 @@ const Input = z._input.p0.br({
     },
 });
 
-const Search = z.m(Input, Suggestions, Compare);
+const Search = z.m(Input, Suggestions, Compares);
 
 const TableCompare = c => z._tr(
 	z._td(z._a({ href: c.links.npm }, c.name)),
@@ -1107,18 +1141,19 @@ const sounds = [
     '207/207957_19852-lq.mp3'
 ].map(s => prefix + s);
 
+const audioCtx = new AudioContext();
+
 const buffers = new Array(sounds.length);
 sounds.forEach(
     (s, i) => fetch(s)
     .then(res => res.arrayBuffer())
+    .then(data => audioCtx.decodeAudioData(data))
     .then(buf => buffers[i] = buf)
 );
 
 export const beats = new Array(sounds.length);
 for (let i = 0; i < beats.length; i++)
     beats[i] = new Array(ticks).fill(0);
-
-const audioCtx = new AudioContext();
 
 export const e = new Set();
 export let tick = 0;
@@ -1163,8 +1198,7 @@ z.setBody(Body);
 // file: style.css
 body { background: black; }
 .g { display: flex; }
-.g.cr { align-items: center; justify-content: center;
-	height: 100%; width: 100%; }
+.g.cr { align-items: center; justify-content: center; }
 .c { border: 10px solid #fff; cursor: pointer;
 	padding: 10px; margin: 10px; }
 .h { background: #fff; }
@@ -1189,7 +1223,7 @@ body { padding: 45px 30px; }
 .s1 { flex: 1; }
 .ac { align-items: center; }
 .jc { justify-content: center; }
-.h { height: 100%; }
+.h { height: max-content; }
 .w { width: 100%; }
 .w0 { max-width: 200px; }
 .w1 { max-width: 640px; }
@@ -1244,8 +1278,8 @@ const Pizza = pizza => z.w0.sp2.g.col(
     z.v(
         z._img({src: pizza.sizes[pizza.size].photo, width: '100%'}),
         z._h2(pizza.name),
-        z._p(pizza.description)
-    ), z.s1(),
+        z._p(pizza.description)),
+    z.s1(),
     z.v(
         z.g(sizes.map((t, j) => z.s1.cp.g.jc({
             class: { b: pizza.size == j },
@@ -1261,9 +1295,7 @@ const Pizza = pizza => z.w0.sp2.g.col(
                         pizza.sizes[pizza.size].count = 1;
                         z.update();
                     }
-                }, 'Add to basket')
-        )
-    )
+                }, 'Add to basket')))
 );
 
 const Menu = z.m(
@@ -1288,8 +1320,7 @@ const BasketItem = (pizza, size, si) => z.sp2.g.sp.ac(
                     size.count = 0;
                     z.update();
                 }
-            }, 'remove')
-        ))
+            }, 'remove')))
 );
 
 const EmptyBasket = z.g.h.w.ac.jc(z.v(
@@ -1318,12 +1349,14 @@ function Basket() {
     );
 }
 
-const Body = z('', _ => {
+function Route() {
     const { route, args } = z.route();
     if (route === '') return Menu;
     else if (route === 'basket') return Basket;
     return lost;
-});
+}
+
+const Body = z.v(Route);
 z.setBody(Body);
 ```
 
@@ -1468,7 +1501,7 @@ const Checkbox = val => z.g.cp.ac.w0({
     }
 },
     z.bg1.brh.p1.abs(),
-    _ => val.get() ? z.p0() : '',
+    _=> val.get() ? z.p0() : '',
     z.p3.b0.brh.c0.bg1.z1({
         class: _=> ({c2: val.get()})
     })
@@ -1499,17 +1532,16 @@ const Titled = (text, c) => z.v(
     z.sp1(c)
 );
 
-const Setting = s => z.sp4(Titled(s,
-    typeof settings[s] === 'number'
-        ? NumberInput(z.Ref(settings, s))
-    : typeof settings[s] === 'boolean'
-        ? Checkbox(z.Ref(settings, s))
-        : ''
+const Tweak = (type, name, val) => z.sp4(Titled(
+    name, type === 'number' ? NumberInput(val)
+    : type === 'boolean' ? Checkbox(val) : ''
 ));
 
 const Settings = z.sp4(
     z.c0.f1('Parameters'),
-    z.g.sp.wrap.w1(Object.keys(settings).map(Setting)),
+    z.g.sp.wrap.w1(Object.keys(settings).map(k => Tweak(
+        typeof settings[k], k, z.Ref(settings, k)
+    ))),
     z.sp4(),
     Button('Add path', _ => {
         paths.push(new Path('M'));
@@ -1521,9 +1553,9 @@ const Parameter = (path, p) => z.sp4(Titled(
     typePropNames[p],
     typePropType[p] == Number
         ? NumberInput(z.Ref(path, p))
-        : typePropType[p] == Boolean
+    : typePropType[p] == Boolean
         ? Checkbox(z.Ref(path, p))
-        : ''
+    : ''
 ));
 
 const Parameters = (path, i) => z.sp4.g.col(
@@ -1532,7 +1564,11 @@ const Parameters = (path, i) => z.sp4.g.col(
     Titled('type',
         Select(z.Ref(path, 'type'), Object.keys(types)),
     ),
-    types[path.type].map(p => Parameter(path, p)),
+    types[path.type].map(p => Tweak(
+        typeof typePropType[p](),
+        typePropNames[p],
+        z.Ref(path, p)
+    )),
     z.sp4(),
     z.s1(),
     Button('Remove', _ => {
@@ -1541,6 +1577,8 @@ const Parameters = (path, i) => z.sp4.g.col(
     })
 );
 
+const Paths = _ => paths.map(Parameters);
+
 const Result = z.sp4.bg2.br0.p0(
     z.c3('<path d="'),
     z.c0(d),
@@ -1548,10 +1586,7 @@ const Result = z.sp4.bg2.br0.p0(
 );
 
 const Menu = z.p2.bg0.f1.br0(
-    z.g.wrap.sp(
-        Settings,
-        _ => paths.map(Parameters),
-    ),
+    z.g.wrap.sp(Settings, Paths),
     z.c0.f1.sp4('Result'),
     Result
 );

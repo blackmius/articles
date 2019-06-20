@@ -68,6 +68,8 @@ button:active, a:active { background-color: #98cae1; }
 h1, h2, h3, h4, h5, h6 { position: relative; }
 .page h1:before, .page h2:before, .page h3:before, .page h4:before, .page h5:before, .page h6:before { content: '#'; position: absolute; left: -.7em; color: #91d7f8; }
 
+blockquote { border-left: 5px solid #ddd; margin-left: 0; padding-left: 24px; color: #666; }
+
 .anchors { font-size: 14px; position: absolute; left: 45px; top: 90px; }
 .sticky { position: fixed; }
 .sticky.tall { bottom: 15px; top: auto; }
