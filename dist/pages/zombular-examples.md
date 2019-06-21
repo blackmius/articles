@@ -2,8 +2,8 @@
 
 This is 10 zombular examples showing the beaty of it's usage on practice.
 
-if you have not familiared with zombular yet you should be read
-[zombular getting started tutorial](https://blackmius.ru/articles/#article;slug=getting-started) before trying to understand examples (I warned you).
+if you have not familiared with zombular yet you should read
+[zombular getting started tutorial](#article;slug=getting-started) before trying to understand examples (I warned you).
 
 Let's gaze upon it's beaty though.
 
@@ -1249,8 +1249,8 @@ import pizzas from './pizzas.js';
 pizzas.forEach(i => i.size = 0);
 
 const lost = z.g.h.w.ac.jc(z.v(
-    z._h1('It seems you get lost.'),
-    z.g.jc(z._a({ href: '#' }, 'Order pizza'))
+    z._h1('You are lost?'),
+    z.g.jc(z._a({ href: '#' }, 'Order a pizza'))
     // and our delivery will find you
 ));
 

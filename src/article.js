@@ -5,19 +5,17 @@ import smoothscroll from './smoothscroll';
 
 let error, content, anchors = [];
 
-const notFound = z._h1.slide("Sorry, i haven't written such an article yet 🤔");
+const notFound = z._h1.slide("Sorry, i haven't written such article yet 🤔");
 
 function sticky(e) {
+    const el = e.target;
     window.onscroll = function() {
-        if (e.target.offsetHeight > window.innerHeight) {
-            if (window.pageYOffset + window.innerHeight - 95 >= e.target.offsetHeight) {
-                e.target.classList.add("sticky", "tall")
-            } else {
-                e.target.classList.remove("sticky", "tall");
-            }
-        } else {
-            e.target.classList.add("sticky")
-        }
+        const y = el.offsetHeight + Math.max(el.offsetTop, 0);
+        if (y >= window.innerHeight) {
+            if (window.pageYOffset + window.innerHeight > y)
+                el.classList.add("sticky", "tall");
+            else el.classList.remove("sticky", "tall");
+        } else el.classList.add("sticky")
     }
 }
 

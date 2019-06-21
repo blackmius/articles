@@ -1,4 +1,6 @@
-If you already have read this document I will stop making you impatient.
+[Русская версия](#article;slug=getting-started-ru)
+
+If you have already read this document, I will stop making you impatient.
 [sources](https://blackmius.ru/shared/sources.zip)
 [minified](https://blackmius.ru/shared/zombular.js)
 
@@ -7,18 +9,18 @@ If you already have read this document I will stop making you impatient.
 Zombular is a powerful javascript micro-framework for building web applications
 faster and reliable created in 2015 by Michael Lazarev.
 
-What zombular Author saying about his framework (read with theater pafos)
->Zombular is supercombinatoric higher metaframework neither simple tag drawer.
+What zombular author says about his framework (read with theater pafos)
+>Zombular is supercombinatoric higher metaframework neither simple tag renderer.
 It is crafted out of necessity to define metacomponents that can create interfaces on the fly from defines placed in database and created with interactive programming enviroment.
 
 ## Features
 
-1. blazing fast
+1. Blazing fast
 
     Zombular uses [cito.js](https://github.com/joelrich/citojs) that is one of
     the fastest virtual DOM library
 
-2. Does not use moron xml in js
+2. Does not use moronic xml in js
 3. Lightweight
 
     18 kb (minified)
@@ -28,6 +30,7 @@ It is crafted out of necessity to define metacomponents that can create interfac
 4. Easy to use
 
     You just import the library and it works
+
 ## Example
 
 The Zombular simpliest `Hello World` program looks like this:
@@ -74,15 +77,21 @@ const Body = z('',
 z.setBody(Body);
 ```
 
-As you can see all your wants can be interpretended in few lines with zombular.
+As you can see all your wants can be interpreted in few lines of code with zombular.
 
 # Z function
 
-This is the least examples what you can do with Zombular. And if you reached
+This is least examples what you can do with Zombular. And if you reached
 here and didn't close the tab let's consider it's API quite closer.
 
-The `z` function first argument is string or object specification which determine
+The `z` function first argument is string or object notation which determine
 `tagname`, `classes`, `id`, `attributes` and `events` of the element.
+
+Events differ from attributes only in prefix, all events must start with `on` prefix:
+`onclick`, `onchange`, `oninput`, `onblur`, `onfocus` etc.
+
+There are 3 special events `on$created`, `on$changed`, `on$destroyed` which
+raised then element created, changed or destroyed from page accordingly.
 
 The second and the rest `z` arguments are element's children
 
@@ -94,14 +103,15 @@ z('tagname.class1.class2#id',
 Children can be `string`, `number`, `boolean`, `function` and `array` types
 
 ``` js
-function a() {
-    return 'a' + 1;
-}
+function a() { return 'a' + 1; }
 z('', 0, 'string', true, false, a, [1, 'a', true]);
 ```
 
-Specification can be written in 3 ways depending on your needs. Shortened string
-form used only for `tagname`, `classes` and `id`:
+Notation can be written in 3 ways depending on your needs.
+
+## Shorthand notation
+
+Shortened notation used only for `tagname`, `classes` and `id`.
 
 ``` js
 z('tagname.class1.class2#id');
@@ -142,7 +152,9 @@ z('div',
 );
 ```
 
-Object specification uses to specify attributes and events.
+## Object notation
+
+Object notation uses to specify attributes and events.
 
 ``` js
 z({
@@ -154,9 +166,10 @@ z({
 });
 ```
 
-Object specification attributes may be following types: `string`, `number`,
-`boolean` and `function` type. Object specification can also accept shortened
-string form specification:
+Object attributes may be following types: `string`, `number`, `object`,
+`boolean` and `function` type.
+
+Object notation can also accept shortened notation form.
 
 ``` js
 z({
@@ -166,7 +179,7 @@ z({
 });
 ```
 
-The `class` attribute can also be the object as following:
+Example, where `сlass` attribute is object.
 
 ``` js
 z({
@@ -180,7 +193,7 @@ z({
 });
 ```
 
-This allows to toggle the classes.
+This allows to toggle classes.
 
 ``` demo
 // file: style.css
@@ -203,11 +216,7 @@ const Body = z('',
 z.setBody(Body);
 ```
 
-Events differ from attributes only in prefix, all events start with `on` prefix:
-`onclick`, `onchange`, `oninput`, `onblur`, `onfocus` etc.
-
-There are 3 special events `on$created`, `on$changed`, `on$destroyed` which
-raised then element created, changed or destroyed from page accordingly.
+## Proxy notation
 
 The last way to specify element attributes is using Proxy.
 
@@ -249,9 +258,9 @@ Calls to `z.update(false, ctx)`, `z.update(true, ctx)` and `z.update(fn, ctx)`
 change the initial context by updating it from `ctx` parameter.
 
 Calls to `z.update` during the update phase (i.e. directly from function's,
-childern of z) have no effect. Function `z.update()` must be called from callbacks.
+childern of z) have no effect.
 
-Example usage:
+Function `z.update()` must be called from callbacks.
 
 ``` demo
 // file: style.css
@@ -328,44 +337,22 @@ z.setBody(Body);
 Zombular provides it's own way to binding data. But Zombular does not stressed
 the importance of own way, so you can use something else.
 
-``` demo
-// file: style.css
-.l { display:block; margin: 6px auto; }
-.error{ text-align: center; color: red; }
-// file: index.js
-import z from 'https://blackmius.ru/shared/zombular.js';
+## z.Val
+   
+``` js
+const val = z.Val(v);
+val.set(v);
+val.get(); // -> val
+``` 
 
-let username = z.Val('');
-let password = z.Val('');
-let loggedIn = false;
-let error;
+## z.Ref
 
-const Input = (val, type, placeholder) => z._input.l({value: val.get, type,
-  oninput: e => (val.set(e.target.value), z.update()), placeholder
-});
-
-function login(username, password) {
-  if (username === 'admin' && password === '12345') {
-    loggedIn = true;
-  } else {
-    error = 'username or password is incorrect';
-  }
-  z.update();
-}
-
-const Body = z('',
-  _ => loggedIn != true ? z('',
-    Input(username, 'text', 'Enter your name'),
-    Input(password, 'password', 'Enter your password'),
-    z.error(error),
-    z._button.l({onclick: e => login(username.get(), password.get())}, 'Login'),
-  ) : z._h1(`Hello, ${username.get()}`)
-)
-
-z.setBody(Body);
-```
-
-You can also store your values in Object using `z.Ref`.
+``` js
+const obj = { key: 'val' };
+const ref = z.Ref(obj, 'key');
+ref.set(v); // obj['key'] = v
+ref.get(); // -> obj['key']
+``` 
 
 ``` demo
 // file: style.css
@@ -386,7 +373,7 @@ function login(username, password) {
   if (username === 'admin' && password === '12345') {
     loggedIn = true;
   } else {
-    error = 'username or password is incorrect';
+    error = 'Username or Password is incorrect';
   }
   z.update();
 }
@@ -406,11 +393,11 @@ z.setBody(Body);
 # Routing
 
 z.route()
-- returns a current route as a {route, args} object
+- returns a current route as a `{ route, args }` object
 
 z.route([path,] args)
 - A reverse of z.route() call. If that one can be thought of as a getter,
-  this one is a setter. `args` is an object of the form {arg1: val1, ...}
+  this one is a setter. `args` is an object of the form `{ arg1: val1, ... }`
   All values are strings, beacuse we are dealing with URL parameters.
   Returns an URL you can use in `location.assign` or `location.replace`.
   URL format is `#path;arg1=val1;arg2=val2`.
@@ -447,7 +434,7 @@ z.setBody(Body);
 
 # What next?
 
-It seems you reached the end of tutorial. If you thirsting in more examples
+It seems you reach the end of tutorial. If you thirsting in more examples
 I maked few for you.
 
 [More Examples](https://blackmius.ru/articles/#article;slug=zombular-examples)

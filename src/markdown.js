@@ -45,7 +45,7 @@ function p(remarkable) {
         const content = tokens[idx].content.trim(),
               lang = tokens[idx].params;
         if (lang === 'demo') {
-            return `<iframe name="${++fid}" src="${embeded}/#;name=${fid};theme=nord;embeded=true;data=${btoa(content)}"></iframe>`;
+            return `<iframe name="${++fid}" src="${embeded}/#;name=${fid};theme=nord;embeded=true;data=${btoa(unescape(encodeURIComponent(content)))}"></iframe>`;
         }
         const code = highlight(content, lang);
         return '<pre><code class="hljs javascript"><table><tbody>'
