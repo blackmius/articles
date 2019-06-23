@@ -90,4 +90,5 @@ blockquote { border-left: 5px solid #ddd; margin-left: 0; padding-left: 24px; co
 	body { font-size: 16px; }
 	.main { margin-top: 24px; padding: 0 24px; }
 	pre, iframe { margin: 0 -24px; font-size: 14px; width: 100vw; }
+	iframe, code { border-radius: 0; }
 }
